@@ -1,5 +1,10 @@
 pipeline {
   agent any
+
+  environment {
+        registry = "sawani/demodocker"
+        registryCredential = "dockerhub"
+  }
   tools {
     maven 'M3'
   }
@@ -26,4 +31,28 @@ pipeline {
       }
     }
   }
+  stage('Docker build '){
+    steps{
+      script{
+        dockerImage = docker.build registry + ":$BUILD_NUMBER"
+          }
+        }
+    }
+
+  stage('Deploy Image') {
+    steps{
+      script {
+        docker.withRegistry( '', registryCredential ) {
+          dockerImage.push()
+              }
+            }
+          }
+
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $registry:$BUILD_NUMBER"
+        }
+    }
+
+  
 }
